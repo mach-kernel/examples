@@ -17,6 +17,21 @@ FROM php:5-apache
 RUN pear channel-discover pear.nrk.io
 RUN pear install nrk/Predis
 
+RUN apt update
+RUN apt install zip git -y
+
+RUN docker-php-ext-install sockets
+
+RUN cd /var/www/html
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+RUN php -r "if (hash_file('sha384', 'composer-setup.php') === '756890a4488ce9024fc62c56153228907f1545c228516cbf63f885e036d37e9a59d27d63f46af1d4d07ee0f76181c7d3') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+RUN php composer-setup.php
+RUN php -r "unlink('composer-setup.php');"
+RUN echo '{}' > composer.json
+RUN php composer.phar config minimum-stability dev
+RUN php composer.phar require jukylin/jaeger-php 2.0.9-beta
+RUN cd -
+
 # If the container's stdio is connected to systemd-journald,
 # /proc/self/fd/{1,2} are Unix sockets and apache will not be able to open()
 # them. Use "cat" to write directly to the already opened fds without opening
